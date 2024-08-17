@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:13
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: pwa_demo-prod
+    ports:
+      - "3000:3000"
+    environment:
+      RAILS_ENV: production
+    depends_on:
+      - db

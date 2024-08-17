@@ -18,6 +18,9 @@ default: &default
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV['DATABASE_HOST'] %>
+  username: <%= ENV['DATABASE_USER'] %>
+  password: <%= ENV['DATABASE_PASSWORD'] %>
 
 development:
   <<: *default
@@ -79,6 +82,6 @@ test:
 #
 production:
   <<: *default
-  database: pwa_demo_production
-  username: pwa_demo
-  password: <%= ENV["PWA_DEMO_DATABASE_PASSWORD"] %>
+  # database: pwa_demo_production
+  # username: pwa_demo
+  # password: <%= ENV["PWA_DEMO_DATABASE_PASSWORD"] %>

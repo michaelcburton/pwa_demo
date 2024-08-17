@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16
+    container_name: pwa_demo-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pwa_demo_development
+
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: pwa_demo-dev
+    command: bundle exec rails s -b '0.0.0.0'
+    volumes:
+      - .:/rails
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_HOST: db
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: pwa_demo_development
+
+volumes:
+  postgres_data:
