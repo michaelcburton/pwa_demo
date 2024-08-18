@@ -80,7 +80,6 @@ document.addEventListener('turbo:load', () => {
       event.preventDefault();
 
       const formData = new FormData(form);
-      // const data = Object.fromEntries(formData.entries());
       const title = formData.get('post[title]');
   
       // Prepare the data object for IndexedDB
@@ -89,12 +88,7 @@ document.addEventListener('turbo:load', () => {
         created_at: new Date() // capture the current date and time
       };
   
-      // Save to IndexedDB
-      addRecord(data).then(() => {
-        console.log('Record added to IndexedDB');
-      });
-  
-      // Optionally, send the data to the server if online
+      // If online, send directly to server
       if (navigator.onLine) {
         fetch('/posts', {
           method: 'POST',
@@ -113,9 +107,16 @@ document.addEventListener('turbo:load', () => {
           .then(data => {
             console.log('Server response:', data);
             // Redirect to posts index page after successful online submission
-            window.location.href = '/posts'; // Adjust the URL if necessary
+            window.location.href = '/posts';
           })
           .catch(error => console.error('Error posting data:', error));
+      } else {    
+        // Save to IndexedDB
+        addRecord(data).then(() => {
+          console.log('Record added to IndexedDB');
+          // Redirect to posts index page after successful offline submission
+          window.location.href = '/posts';
+        });  
       }
     });  
   }
