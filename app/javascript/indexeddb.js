@@ -1,5 +1,7 @@
 // Initialize the database
 const db = new Dexie('MyAppDatabase');
+console.log("Dexie DB created")
+console.log(db)
 
 // Define a schema
 db.version(1).stores({
