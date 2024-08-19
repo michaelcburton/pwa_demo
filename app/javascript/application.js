@@ -1,7 +1,7 @@
 // Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
 import "@hotwired/turbo-rails"
 import "controllers"
-import { addRecord, getAllRecords, clearRecords } from './indexeddb';
+import { addRecord, getAllRecords, clearRecords } from 'indexeddb';
 
 // Example of adding a record when a form is submitted
 document.addEventListener('turbo:load', () => {
