@@ -1,9 +1,17 @@
 <h2>Online and Offline Functionality Overview</h2>
-<p>Our website is designed to seamlessly handle both online and offline scenarios, ensuring a robust user experience under varying network conditions. Here’s how it works:</p>
+<p>Our website, built on a standard Rails 7 framework using the default asset pipeline with Importmaps, is designed to handle both online and offline scenarios seamlessly, ensuring a robust user experience under varying network conditions. Below is an overview of how our system operates:</p>
 <ul>
-    <li><strong>Offline Data Handling:</strong> When offline, any data submitted through forms (such as new posts) is saved locally on your device using IndexedDB. This ensures that no data is lost even when connectivity is intermittent or unavailable.</li>
-    <li><strong>Online Synchronization:</strong> Once the network connection is restored, the data stored locally is automatically synchronized with our server. This means any posts you created while offline will be uploaded to ensure consistency across all devices and sessions.</li>
-    <li><strong>Simulated Network Conditions:</strong> We provide a toggle to switch between online and offline modes, allowing you to experience how the website behaves under both conditions. This feature is especially useful for demonstrations and testing how data is managed locally and synced when online.</li>
-    <li><strong>Visual Network Status Indicator:</strong> A visual indicator shows the current network status (online or offline), providing clear feedback on whether your actions are being processed locally or synchronized with the server.</li>
+    <li><strong>Technology Stack:</strong>
+        <ul>
+            <li><strong>Framework:</strong> Rails 7 with asset pipeline and Importmaps for managing JavaScript modules.</li>
+            <li><strong>Database:</strong> PostgreSQL</li>
+            <li><strong>Local Storage:</strong> <a href="https://dexie.org/">Dexie.js</a> library utilized to interact with IndexedDB.</li>
+        </ul>
+    </li>
+    <li><strong>Offline Data Handling:</strong> <span class="tag tag-success">Done</span> Data such as new posts submitted through forms is saved locally on your device using IndexedDB through Dexie.js. This approach ensures that no data is lost even when connectivity is intermittent or unavailable.</li>
+    <li><strong>Online Synchronization:</strong> <span class="tag tag-warning">In Progress</span> Once the network connection is restored, the data stored locally is automatically synchronized with our server. This ensures that any posts created while offline are uploaded, maintaining consistency across all devices and sessions.</li>
+    <li><strong>Simulated Network Conditions:</strong> <span class="tag tag-success">Done</span> Provide a toggle to switch between online and offline modes, allowing you to experience how the website behaves under both conditions. This feature is especially useful for demonstrations and testing how data is managed locally and synced when online.</li>
+    <li><strong>Visual Network Status Indicator:</strong> <span class="tag tag-success">Done</span> A visual indicator displays the current network status (online or offline), providing clear feedback on whether your actions are being processed locally or synchronized with the server.</li>
 </ul>
+
 <p>Test here: <%= link_to "Posts", posts_path %></p>

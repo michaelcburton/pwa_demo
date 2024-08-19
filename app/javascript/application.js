@@ -61,9 +61,13 @@ document.addEventListener('turbo:load', () => {
     container.innerHTML = ''; // Clear existing posts
 
     posts.forEach(post => {
-      const postElement = document.createElement('div');
+      const postElement = document.createElement('tr');
       postElement.className = 'post';
-      postElement.innerHTML = `<h2>${post.title}</h2><p>Created at: ${new Date(post.created_at).toLocaleString()}</p><p>Data: ${JSON.stringify(post)}`;
+      postElement.innerHTML = `
+        <td>${post.title}</td>
+        <td>${new Date(post.created_at).toLocaleString()}</td>
+        <td>Data: ${JSON.stringify(post)}</td>
+      `;
       container.appendChild(postElement);
     });
   }
