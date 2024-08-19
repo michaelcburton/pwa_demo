@@ -1,1 +1,9 @@
-Hello world!
+<h2>Online and Offline Functionality Overview</h2>
+<p>Our website is designed to seamlessly handle both online and offline scenarios, ensuring a robust user experience under varying network conditions. Here’s how it works:</p>
+<ul>
+    <li><strong>Offline Data Handling:</strong> When offline, any data submitted through forms (such as new posts) is saved locally on your device using IndexedDB. This ensures that no data is lost even when connectivity is intermittent or unavailable.</li>
+    <li><strong>Online Synchronization:</strong> Once the network connection is restored, the data stored locally is automatically synchronized with our server. This means any posts you created while offline will be uploaded to ensure consistency across all devices and sessions.</li>
+    <li><strong>Simulated Network Conditions:</strong> We provide a toggle to switch between online and offline modes, allowing you to experience how the website behaves under both conditions. This feature is especially useful for demonstrations and testing how data is managed locally and synced when online.</li>
+    <li><strong>Visual Network Status Indicator:</strong> A visual indicator shows the current network status (online or offline), providing clear feedback on whether your actions are being processed locally or synchronized with the server.</li>
+</ul>
+<p>Test here: <%= link_to "Posts", posts_path %></p>

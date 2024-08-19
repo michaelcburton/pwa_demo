@@ -7,13 +7,14 @@
     <%= csp_meta_tag %>
 
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-
+    <link rel="stylesheet" href="https://maxbeier.github.io/tawian-frontend/tawian-frontend.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Cousine:400,400i,700,700i">
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= render "shared/toggle" %>
+  <body class="container">
+    <%= render "shared/navbar" %>
     <%= yield %>
   </body>
 </html>
