@@ -1,16 +1,18 @@
 <header class="site-header">
     <a class="site-title" href="/">Offline Demo</a>
     <nav class="site-nav nav-separated">
-        <ul>
-            <li>
-                <a id="clear-offline-records">Clear Offline Records</a>
-            </li>
-            <li>
-                <a id="toggle-online">Toggle Online/Offline</a>
-            </li>
-            <li id="connectivity-status" style="padding: 10px; color: white; background-color: gray;">
-                Status: <span id="status-text">Checking...</span>
-            </li>
-        </ul>
+        <div data-controller="network-status">
+            <ul>
+                <li>
+                    <a id="clear-offline-records">Clear Offline Records</a>
+                </li>
+                <li><button data-action="network-status#simulateOfflineMode">Simulate Offline</button></li>
+                <li><button data-action="network-status#simulateOnlineMode">Simulate Online</button></li>
+                <li id="connectivity-status">
+                    Status: <span id="status-text">Checking...</span>
+                </li>
+            </ul>
+        </div>
     </nav>
 </header>
+

@@ -24,5 +24,10 @@ function clearRecords() {
   return db.posts.clear();
 }
 
+// Function to delete a record from the 'posts' table
+function deleteRecord(postId) {
+  return db.posts.delete(postId);
+}
+
 // Export functions for use in other parts of the app
-export { addRecord, getAllRecords, clearRecords, db };
+export { addRecord, getAllRecords, clearRecords, deleteRecord, db };
