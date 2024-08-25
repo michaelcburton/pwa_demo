@@ -1,6 +1,6 @@
 // network_status_controller.js
 import { Controller } from "@hotwired/stimulus"
-import { synchronizeData } from "../sync"
+import { synchronizeData } from "sync"
 
 export default class extends Controller {
     connect() {
