@@ -5,7 +5,7 @@ const db = new Dexie('MyAppDatabase');
 
 // Define a schema
 db.version(1).stores({
-  posts: '++id, title, created_at, items'
+  posts: '++id, title, created_at, items_attributes'
 });
 
 // Function to add a record
@@ -13,7 +13,7 @@ function addRecord(data) {
   return db.posts.add({
     title: data['title'],
     created_at: new Date(),
-    items: data.items_attributes || []
+    items_attributes: data.items_attributes || []
   }).then(id => {
     console.log("Record added with ID:", id)
   }).catch(error => {
