@@ -31,26 +31,46 @@ export default class extends Controller {
   }
 
   submit(event) {
-    console.log("Submit event triggered")
+    console.log("Submit event triggered");
     event.preventDefault();
     const formData = new FormData(this.formTarget);
-    const title = formData.get('post[title]');
-
+    
+    // Prepare data object for post and its items
     const data = {
-      title: title,
+      title: formData.get('post[title]'),
+      items_attributes: this.collectItemsData(formData),
       created_at: new Date()
     };
 
     if (navigator.onLine) {
-      console.log("Sending to server...")
+      console.log("Sending to server...");
       this.sendToServer(data);
     } else {
-      console.log("Saving locally...")
+      console.log("Saving locally...");
       this.saveToIndexedDB(data);
     }
   }
 
+  collectItemsData(formData) {
+    const itemsData = {};
+    // Assuming the name attributes are something like 'post[items_attributes][0][description]'
+    // Iterate over all entries in formData
+    formData.forEach((value, key) => {
+      // Regex to extract indices and property names for items_attributes
+      let match = key.match(/^post\[items_attributes\]\[(\d+)\]\[(\w+)\]$/);
+      if (match) {
+        const index = match[1];
+        const prop = match[2];
+        if (!itemsData[index]) itemsData[index] = {};
+        itemsData[index][prop] = value;
+      }
+    });
+    return itemsData;
+  }
+
   sendToServer(data) {
+    console.log("Final data being sent to server:", JSON.stringify({ post: data }));
+    debugger;
     fetch('/posts', {
       method: 'POST',
       body: JSON.stringify({ post: data }),

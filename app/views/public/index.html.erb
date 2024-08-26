@@ -1,5 +1,8 @@
 <h2>Online and Offline Functionality Overview</h2>
-<p>Our website, built on a standard Rails 7 framework using the default asset pipeline with Importmaps, is designed to handle both online and offline scenarios. Below is an overview of how our system operates:</p>
+<p>This site, built on a standard Rails 7 framework using the default asset pipeline with Importmaps, is designed to handle both online and offline scenarios. Below is an overview of how our system operates:</p>
+
+
+<p>Test here: <%= link_to "Posts", posts_path %></p>
 <ul>
     <li><strong>Technology Stack:</strong>
         <ul>
@@ -12,7 +15,5 @@
     <li><span class="tag tag-success">Done</span> <strong>Online Synchronization:</strong> Once the network connection is restored, the data stored locally is automatically synchronized with our server. This ensures that any posts created while offline are uploaded, maintaining consistency across all devices and sessions.</li>
     <li><span class="tag tag-success">Done</span> <strong>Simulated Network Conditions:</strong> Provide a toggle to switch between online and offline modes, allowing you to experience how the website behaves under both conditions. This feature is especially useful for demonstrations and testing how data is managed locally and synced when online.</li>
     <li><span class="tag tag-success">Done</span> <strong>Visual Network Status Indicator:</strong> A visual indicator displays the current network status (online or offline), providing clear feedback on whether your actions are being processed locally or synchronized with the server.</li>
-    <li><span class="tag tag-warning">In Progress</span> <strong>Complex Records:</strong> Increase the complexity of locally saved records. Accomodate associations and nested records.</li>
+    <li><span class="tag tag-success">Done</span> <strong>Complex Records:</strong> Increase the complexity of locally saved records. Accomodate associations and nested records.</li>
 </ul>
-
-<p>Test here: <%= link_to "Posts", posts_path %></p>

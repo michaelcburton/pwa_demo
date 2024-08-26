@@ -1,16 +1,23 @@
+// app/javascript/indexeddb.js
+
 // Initialize the database
 const db = new Dexie('MyAppDatabase');
 
 // Define a schema
 db.version(1).stores({
-  posts: '++id, title, created_at'
+  posts: '++id, title, created_at, items'
 });
 
 // Function to add a record
 function addRecord(data) {
   return db.posts.add({
     title: data['title'],
-    created_at: new Date()
+    created_at: new Date(),
+    items: data.items_attributes || []
+  }).then(id => {
+    console.log("Record added with ID:", id)
+  }).catch(error => {
+    console.error("Failed to add record:", error)
   });
 }
 
