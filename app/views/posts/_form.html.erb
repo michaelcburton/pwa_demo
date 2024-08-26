@@ -20,18 +20,23 @@
     <div data-controller="nested-form">
       <%= form.fields_for :items do |item_form| %>
         <div class="nested-fields" data-new-record=<%= item_form.object.new_record? ? 'true' : 'false' %>>
-          <%= item_form.label :description %>
-          <%= item_form.text_field :description %>
-          <%= link_to 'Remove', '#', data: { action: 'click->nested-form#remove_association' } %>
+          <label class="form-group">
+            <%= item_form.text_field :description, class: "form-control", placeholder: "Enter text..." %>
+            <span class="form-label">Description</span>
+          </label>
+            <%= link_to 'Remove', '#', data: { action: 'click->nested-form#remove_association' } %>
         </div>
       <% end %>
       <template data-nested-form-target="template">
         <div class="nested-fields" data-new-record="true">
           <%= form.fields_for :items, Item.new, child_index: "NEW_RECORD" do |builder| %>
-            <%= builder.label :description %>
-            <%= builder.text_field :description %>
-            <%= builder.hidden_field :_destroy %>
-            <%= link_to 'Remove', '#', data: { action: 'click->nested-form#remove_association' } %>
+            <label class="form-group">
+              <%= builder.text_field :description, class: "form-control", placeholder: "Enter text..." %>
+              <span class="form-label">Description</span>
+            </label>
+              <%= builder.hidden_field :_destroy %>
+              <%= link_to 'Remove', '#', data: { action: 'click->nested-form#remove_association' } %>
+            
           <% end %>
         </div>
       </template>
@@ -39,7 +44,7 @@
     </div>
 
     <div>
-      <%= form.submit %>
+      <%= form.submit class: "btn btn-primary" %>
     </div>
   <% end %>
 </div>

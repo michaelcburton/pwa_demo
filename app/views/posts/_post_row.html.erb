@@ -3,3 +3,10 @@
     <td><%= post.created_at %></td>
     <td><%= link_to "Destroy this post", post, data: { turbo_method: :delete } %></td>
 </tr>
+<% post.items.each do |item| %>
+    <tr>
+        <td></td>
+        <td><%= item.description %></td>
+        <td></td>
+    </tr>
+<% end %>
