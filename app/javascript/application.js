@@ -3,3 +3,4 @@ import "@hotwired/turbo-rails"
 import "controllers"
 import 'indexeddb'
 import 'sync'
+import 'companion'

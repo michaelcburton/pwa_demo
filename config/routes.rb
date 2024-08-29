@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get "/service_worker.js" => "service_worker#service_worker"
+  get "/manifest.json" => "service_worker#manifest"
   resources :posts
   root "public#index"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
