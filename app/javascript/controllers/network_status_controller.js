@@ -1,60 +1,41 @@
-// network_status_controller.js
-import { Controller } from "@hotwired/stimulus"
-import { synchronizeData } from "sync"
+// app/javascript/controllers/network_status_controller.js
+import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-    connect() {
-        this.handleNetworkChange = this.handleNetworkChange.bind(this);
-        window.addEventListener('online', this.handleNetworkChange);
-        window.addEventListener('offline', this.handleNetworkChange);
+  static targets = ["status", "quality", "testButton"]
 
-        const savedStatus = localStorage.getItem('networkStatus');
-        if (savedStatus === 'offline') {
-            this.simulateOfflineMode();
-        } else {
-            this.simulateOnlineMode();
-        }
+  connect() {
+    this.updateOnlineStatus();
+    window.addEventListener('online',  () => this.updateOnlineStatus());
+    window.addEventListener('offline', () => this.updateOnlineStatus());
+  }
 
-        this.updateStatusIndicator();
+  updateOnlineStatus() {
+    const online = navigator.onLine;
+    this.statusTarget.textContent = online ? 'Online' : 'Offline';
+    this.statusTarget.className = online ? 'online' : 'offline';
+    if (online) {
+      this.testConnectionQuality();
     }
+  }
 
-    disconnect() {
-        window.removeEventListener('online', this.handleNetworkChange);
-        window.removeEventListener('offline', this.handleNetworkChange);
-    }
+  testConnectionQuality() {
+    const startTime = (new Date()).getTime();
+    const image = new Image();
+    image.onload = () => {
+      const endTime = (new Date()).getTime();
+      const duration = (endTime - startTime);
+      const speed = Math.round(512 / duration); // Assuming image size is 512KB
+      const quality = speed < 1 ? 'Poor' : speed < 5 ? 'Moderate' : 'Good';
+      this.qualityTarget.textContent = `Quality: ${quality} (${speed} KB/ms)`;
+    };
+    image.onerror = () => {
+      this.qualityTarget.textContent = 'Quality: Unable to determine';
+    };
+    image.src = "/test_image.jpg?" + Date.now(); // Ensure the image is not cached
+  }
 
-    handleNetworkChange() {
-        if (navigator.onLine) {
-            console.log('Network status: online');
-            synchronizeData();
-        } else {
-            console.log('Network status: offline');
-        }
-        this.updateStatusIndicator();
-    }
-
-    updateStatusIndicator() {
-        const statusText = this.element.querySelector('#status-text');
-        const statusIndicator = this.element.querySelector('#connectivity-status');
-
-        if (navigator.onLine) {
-            statusText.textContent = 'Online';
-            statusIndicator.style.backgroundColor = 'green';
-        } else {
-            statusText.textContent = 'Offline';
-            statusIndicator.style.backgroundColor = 'red';
-        }
-    }
-
-    simulateOfflineMode() {
-        localStorage.setItem('networkStatus', 'offline');
-        navigator.__defineGetter__('onLine', function() { return false; });
-        this.handleNetworkChange();
-    }
-
-    simulateOnlineMode() {
-        localStorage.setItem('networkStatus', 'online');
-        navigator.__defineGetter__('onLine', function() { return true; });
-        this.handleNetworkChange();
-    }
+  testButtonClick() {
+    this.testConnectionQuality();
+  }
 }

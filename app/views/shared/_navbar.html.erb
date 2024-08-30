@@ -2,13 +2,13 @@
     <a class="site-title" href="/">Offline Demo</a>
     <nav class="site-nav nav-separated">
         <div data-controller="network-status">
-            <ul>
-                <li><button data-action="network-status#simulateOfflineMode">Simulate Offline</button></li>
-                <li><button data-action="network-status#simulateOnlineMode">Simulate Online</button></li>
-                <li id="connectivity-status">
-                    Status: <span id="status-text">Checking...</span>
-                </li>
-            </ul>
+            <div id="connection-status">
+                Status: <span data-network-status-target="status">Checking...</span>
+            </div>
+            <div>
+                Connection Quality: <span data-network-status-target="quality">Testing...</span>
+                <button data-action="click->network-status#testButtonClick" data-network-status-target="testButton">Test Connection Quality</button>
+            </div>
         </div>
     </nav>
 </header>
