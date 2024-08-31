@@ -15,9 +15,18 @@ export default class extends Controller {
     this.statusTarget.textContent = online ? 'Online' : 'Offline';
     this.statusTarget.className = online ? 'online' : 'offline';
     if (online) {
-      this.testConnectionQuality();
+      this.checkOnlineStatus();
     }
   }
+
+  checkOnlineStatus = async () => {
+    try {
+      const online = await fetch("/1pixel.png");
+      return online.status >= 200 && online.status < 300; // either true or false
+    } catch (err) {
+      return false; // definitely offline
+    }
+  };
 
   testConnectionQuality() {
     const startTime = (new Date()).getTime();
@@ -27,10 +36,10 @@ export default class extends Controller {
       const duration = (endTime - startTime);
       const speed = Math.round(512 / duration); // Assuming image size is 512KB
       const quality = speed < 1 ? 'Poor' : speed < 5 ? 'Moderate' : 'Good';
-      this.qualityTarget.textContent = `Quality: ${quality} (${speed} KB/ms)`;
+      this.qualityTarget.textContent = `${quality} (${speed} KB/ms)`;
     };
     image.onerror = () => {
-      this.qualityTarget.textContent = 'Quality: Unable to determine';
+      this.qualityTarget.textContent = 'Unable to determine';
     };
     image.src = "/test_image.jpg?" + Date.now(); // Ensure the image is not cached
   }
