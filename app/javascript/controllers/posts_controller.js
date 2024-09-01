@@ -1,6 +1,7 @@
 // app/javascript/controllers/posts_controller.js
 import { Controller } from "@hotwired/stimulus"
 import { getAllRecords, addRecord, deleteRecord } from "indexeddb"
+import { checkOnlineStatus } from "network";
 
 export default class extends Controller {
   static targets = ["postsContainer", "form"]
@@ -42,13 +43,16 @@ export default class extends Controller {
       created_at: new Date()
     };
 
-    if (navigator.onLine) {
-      console.log("Sending to server...");
-      this.sendToServer(data);
-    } else {
-      console.log("Saving locally...");
-      this.saveToIndexedDB(data);
-    }
+    checkOnlineStatus(isOnLine => {
+      debugger;
+      if (isOnLine) {
+        console.log("Sending to server...");
+        this.sendToServer(data);
+      } else {
+        console.log("Saving locally...");
+        this.saveToIndexedDB(data);
+      }
+    })
   }
 
   collectItemsData(formData) {
@@ -70,7 +74,6 @@ export default class extends Controller {
 
   sendToServer(data) {
     console.log("Final data being sent to server:", JSON.stringify({ post: data }));
-    debugger;
     fetch('/posts', {
       method: 'POST',
       body: JSON.stringify({ post: data }),

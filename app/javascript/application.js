@@ -1,6 +1,7 @@
 // Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
 import "@hotwired/turbo-rails"
 import "controllers"
-import 'indexeddb'
-import 'sync'
-import 'companion'
+import "indexeddb"
+import "sync"
+import "companion"
+import "network"
