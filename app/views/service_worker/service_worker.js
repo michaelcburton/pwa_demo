@@ -1,12 +1,13 @@
 // app/views/service_worker/service_worker.js
 
-const version = '1.0.1'; // Update this version number with each change
+const version = '1.0.3'; // Update this version number with each change
 
 // Define an array of URLs to cache
 const URLS_TO_CACHE = [
   'https://unpkg.com/dexie/dist/dexie.js',
   'https://maxbeier.github.io/tawian-frontend/tawian-frontend.css',
   'https://fonts.googleapis.com/css?family=Cousine:400,400i,700,700i',
+  'https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js'
   // Add other assets and routes as needed
 ];
 
@@ -14,16 +15,39 @@ importScripts(
   "https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js"
 );
 
+// The precaching doesn't work with cross-origin assets. For now trying
+// a manual solution in the 'install' event.
+//
+// workbox.precaching.precacheAndRoute([
+//   { url: '/', revision: version },
+//   { url: '/offline', revision: version },
+//   ...URLS_TO_CACHE.map(url => ({url, revision: null})),
+// ]);
+
 function onInstall(event) {
   console.log('[Serviceworker]', "Installing!", event);
-
-  // Load cache with linked dependencies
   event.waitUntil(
-    caches.open(`assets-styles-and-scripts-${version}`)
-        .then(function(cache) {
-            console.log('Opened cache');
-            return cache.addAll(URLS_TO_CACHE);
-        })
+    (async () => {
+      const cache = await caches.open(`assets-styles-and-scripts-${version}`);
+      await cache.addAll([
+        '/',
+        '/offline'
+      ]);
+
+      // Manually cache the cross-origin assets
+      for (const url of URLS_TO_CACHE) {
+        try {
+          const response = await fetch(url, { mode: 'cors' });
+          if (response.ok) {
+            await cache.put(url, response);
+          } else {
+            console.error(`Failed to cache ${url}:`, response.status, response.statusText);
+          }
+        } catch (error) {
+          console.error(`Failed to fetch ${url}:`, error);
+        }
+      }
+    })()
   );
 }
 
@@ -56,18 +80,6 @@ function onActivate(event) {
 }
 
 function onFetch(event) {
-  // event.respondWith(
-  //   caches.match(event.request).then(function(response) {
-  //       return response || fetch(event.request).catch(() => {
-  //           if (event.request.url.includes('.css')) {
-  //               return caches.match('/offline-style.css');
-  //           } else if (event.request.url.includes('.js')) {
-  //               return caches.match('/offline-script.js');
-  //           }
-  //           return caches.match('/offline.html');
-  //       });
-  //   })
-  // );
 }
 self.addEventListener('install', onInstall);
 self.addEventListener('activate', onActivate);
@@ -98,11 +110,11 @@ registerRoute(
 
 // For every other page we use network first to ensure the most up-to-date resources
 registerRoute(
-    ({request, url}) => request.destination === "document" ||
-        request.destination === "",
-        new NetworkFirst({
-            cacheName: `documents-${version}`,
-        })
+  ({request, url}) => request.destination === "document" ||
+    request.destination === "",
+    new NetworkFirst({
+        cacheName: `documents-${version}`,
+    })
 )
 
 // For assets (scripts and images), we use cache first
