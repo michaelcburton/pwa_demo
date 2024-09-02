@@ -1,6 +1,6 @@
 // app/views/service_worker/service_worker.js
 
-const version = '1.0.7'; // Update this version number with each change
+const version = '1.0.12'; // Update this version number with each change
 
 // Define an array of URLs to cache
 const URLS_TO_CACHE = [
@@ -17,32 +17,36 @@ importScripts(
 
 workbox.setConfig({ debug: true });
 
-function onInstall(event) {
+async function onInstall(event) {
   console.log('[Serviceworker]', "Installing!", event);
   event.waitUntil(
     (async () => {
-      const doc_cache = await caches.open(`documents-${version}`);
-      await doc_cache.addAll([
-        '/',
-        '/manifest.json',
-        '/offline'
-      ]);
+      try {
+        const doc_cache = await caches.open(`documents-${version}`);
+        await doc_cache.addAll([
+          '/',
+          '/manifest.json',
+          '/offline'
+        ]);
 
-      // Manually cache the cross-origin assets
-      const asset_cache = await caches.open(`assets-styles-and-scripts-${version}`);
-      for (const url of URLS_TO_CACHE) {
-        try {
-          const response = await fetch(url, { mode: 'cors' });
-          if (response.ok) {
-            await asset_cache.put(url, response);
-          } else {
-            console.error(`Failed to cache ${url}:`, response.status, response.statusText);
+        // Manually cache the cross-origin assets
+        const asset_cache = await caches.open(`assets-styles-and-scripts-${version}`);
+        for (const url of URLS_TO_CACHE) {
+          try {
+            const response = await fetch(url, { mode: 'cors' });
+            if (response.ok) {
+              await asset_cache.put(url, response);
+            } else {
+              console.error(`Failed to cache ${url}:`, response.status, response.statusText);
+            }
+          } catch (error) {
+            console.error(`Failed to fetch ${url}:`, error);
           }
-        } catch (error) {
-          console.error(`Failed to fetch ${url}:`, error);
         }
+      } catch (error) {
+        console.error('Error during service worker installation:', error);
       }
-    })
+    })()
   );
 }
 
@@ -74,41 +78,40 @@ function onActivate(event) {
   );
 }
 
-function onFetch(event) {
-  event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      if (cachedResponse) {
-        return cachedResponse; // Return the cached resource if available
-      }
-      return fetch(event.request).catch(() => {
-        if (event.request.destination === 'document') {
-          return caches.match('/offline.html'); // Serve offline fallback for HTML pages
-        }
-      });
-    })
-  );
-}
 self.addEventListener('install', onInstall);
 self.addEventListener('activate', onActivate);
-self.addEventListener('fetch', onFetch);
 
 // We first define the strategies we will use and the registerRoute function
 const {CacheFirst, NetworkFirst, NetworkOnly} = workbox.strategies;
 const {registerRoute} = workbox.routing;
+const {ExpirationPlugin} = workbox.expiration;
+const {CacheableResponsePlugin} = workbox.cacheableResponse;
 
-// If we have critical pages that won't be changing very often, it's a good idea to use cache first with them
+// Cache the home page with a Network First strategy
 registerRoute(
-  ({url}) => url.pathname === '/',
-    new CacheFirst({
-      cacheName: `documents-${version}`,
+  ({ url }) => url.pathname === '/',
+  new CacheFirst({
+    cacheName: `documents-${version}`,
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+      }),
+    ],
   })
-)
+);
 
 // manifest.json
 registerRoute(
   ({url}) => url.pathname === '/manifest.json',
   new CacheFirst({
     cacheName: `documents-${version}`,
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 30 * 24 * 60 * 60,
+      }),
+    ],
   })
 );
 
@@ -128,7 +131,17 @@ registerRoute(
   ({request, url}) => request.destination === "document" ||
     request.destination === "",
     new NetworkFirst({
-        cacheName: `documents-${version}`,
+      cacheName: `documents-${version}`,
+      networkTimeoutSeconds: 10,
+      plugins: [
+        new CacheableResponsePlugin({
+          statuses: [0, 200],
+        }),
+        new ExpirationPlugin({
+          maxEntries: 50,
+          maxAgeSeconds: 30 * 24 * 60 * 60,
+        }),
+      ],
     })
 )
 
@@ -138,6 +151,12 @@ registerRoute(
     request.destination === "style",
     new CacheFirst({
         cacheName: `assets-styles-and-scripts-${version}`,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 50,
+            maxAgeSeconds: 30 * 24 * 60 * 60,
+          }),
+        ],
     })
 )
 
@@ -145,6 +164,12 @@ registerRoute(
   ({request}) => request.destination === "image",
     new CacheFirst({
         cacheName: `assets-images-${version}`,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 50,
+            maxAgeSeconds: 30 * 24 * 60 * 60,
+          }),
+        ],
     })
 )
 
