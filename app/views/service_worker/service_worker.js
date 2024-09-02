@@ -1,6 +1,6 @@
 // app/views/service_worker/service_worker.js
 
-const version = '1.0.5'; // Update this version number with each change
+const version = '1.0.7'; // Update this version number with each change
 
 // Define an array of URLs to cache
 const URLS_TO_CACHE = [
@@ -17,15 +17,6 @@ importScripts(
 
 workbox.setConfig({ debug: true });
 
-// The precaching doesn't work with cross-origin assets. For now trying
-// a manual solution in the 'install' event.
-//
-// workbox.precaching.precacheAndRoute([
-//   { url: '/', revision: version },
-//   { url: '/offline', revision: version },
-//   ...URLS_TO_CACHE.map(url => ({url, revision: null})),
-// ]);
-
 function onInstall(event) {
   console.log('[Serviceworker]', "Installing!", event);
   event.waitUntil(
@@ -33,6 +24,7 @@ function onInstall(event) {
       const doc_cache = await caches.open(`documents-${version}`);
       await doc_cache.addAll([
         '/',
+        '/manifest.json',
         '/offline'
       ]);
 
@@ -50,7 +42,7 @@ function onInstall(event) {
           console.error(`Failed to fetch ${url}:`, error);
         }
       }
-    })()
+    })
   );
 }
 
@@ -83,6 +75,18 @@ function onActivate(event) {
 }
 
 function onFetch(event) {
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse; // Return the cached resource if available
+      }
+      return fetch(event.request).catch(() => {
+        if (event.request.destination === 'document') {
+          return caches.match('/offline.html'); // Serve offline fallback for HTML pages
+        }
+      });
+    })
+  );
 }
 self.addEventListener('install', onInstall);
 self.addEventListener('activate', onActivate);
@@ -99,6 +103,14 @@ registerRoute(
       cacheName: `documents-${version}`,
   })
 )
+
+// manifest.json
+registerRoute(
+  ({url}) => url.pathname === '/manifest.json',
+  new CacheFirst({
+    cacheName: `documents-${version}`,
+  })
+);
 
 // Specific route for the network check image and connection quality image
 registerRoute(
