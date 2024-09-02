@@ -1,6 +1,6 @@
 // app/views/service_worker/service_worker.js
 
-const version = '1.0.0'; // Update this version number with each change
+const version = '1.0.1'; // Update this version number with each change
 
 importScripts(
   "https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js"
@@ -57,9 +57,14 @@ registerRoute(
   })
 )
 
-// Specific route for the network check image
+// Specific route for the network check image and connection quality image
 registerRoute(
   ({url}) => url.pathname === '/1x1.png',
+  new NetworkOnly()
+);
+
+registerRoute(
+  ({url}) => url.pathname === '/test_image.jpg',
   new NetworkOnly()
 );
 

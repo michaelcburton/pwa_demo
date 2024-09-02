@@ -41,7 +41,7 @@ export default class extends Controller {
     image.onerror = () => {
       this.qualityTarget.textContent = 'Unable to determine';
     };
-    image.src = "/test_image.jpg?" + Date.now(); // Ensure the image is not cached
+    image.src = "/test_image.jpg"
   }
 
   testButtonClick() {
