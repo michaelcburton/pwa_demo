@@ -1,6 +1,5 @@
-const version = '1.0.13'; // Update this version number with each change
+const version = '1.0.15'; // Update this version number with each change
 
-// Define an array of URLs to cache
 const URLS_TO_CACHE = [
   'https://unpkg.com/dexie/dist/dexie.js',
   'https://maxbeier.github.io/tawian-frontend/tawian-frontend.css',
@@ -19,7 +18,6 @@ async function onInstall(event) {
           '/offline.html'
         ]);
 
-        // Manually cache the cross-origin assets
         const asset_cache = await caches.open(`assets-styles-and-scripts-${version}`);
         for (const url of URLS_TO_CACHE) {
           try {
@@ -43,7 +41,6 @@ async function onInstall(event) {
 function onActivate(event) {
   console.log('[Serviceworker]', "Activating!", event);
 
-  // clear old caches
   const currentCaches = [
     `documents-${version}`,
     `assets-styles-and-scripts-${version}`,
@@ -54,7 +51,6 @@ function onActivate(event) {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cache => {
-          // If this cache name isn't in the list of current caches, then delete it.
           if (!currentCaches.includes(cache)) {
             console.log(`Deleting old cache: ${cache}`);
             return caches.delete(cache);
@@ -72,23 +68,19 @@ self.addEventListener('install', onInstall);
 self.addEventListener('activate', onActivate);
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.url.includes('/1x1.png') || event.request.url.includes('/test_image.jpg')) {
-    // Network only strategy for specific images
-    event.respondWith(fetch(event.request));
-  } else if (event.request.destination === 'document' || event.request.destination === '') {
-    // Network first strategy for documents
+  console.log('[Serviceworker]', "fetch", event)
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then(networkResponse => {
-          return caches.open(`documents-${version}`).then(cache => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          });
-        })
-        .catch(() => caches.match(event.request).then(response => response || caches.match('/offline.html')))
+      caches.match(event.request).then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse; // Serve from cache
+        }
+        return fetch(event.request).catch(() => caches.match('/offline.html'));
+      })
     );
+  } else if (event.request.url.includes('/1x1.png') || event.request.url.includes('/test_image.jpg')) {
+    event.respondWith(fetch(event.request));
   } else if (event.request.destination === 'style' || event.request.destination === 'script' || event.request.destination === 'image') {
-    // Cache first strategy for assets
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
         return cachedResponse || fetch(event.request).then(networkResponse => {
@@ -102,17 +94,4 @@ self.addEventListener('fetch', (event) => {
   } else {
     event.respondWith(fetch(event.request));
   }
-});
-
-// Offline fallback for other failures
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request).catch(() => {
-        if (event.request.destination === 'document') {
-          return caches.match('/offline.html');
-        }
-      });
-    })
-  );
 });
