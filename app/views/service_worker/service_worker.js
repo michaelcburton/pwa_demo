@@ -2,12 +2,29 @@
 
 const version = '1.0.1'; // Update this version number with each change
 
+// Define an array of URLs to cache
+const URLS_TO_CACHE = [
+  'https://unpkg.com/dexie/dist/dexie.js',
+  'https://maxbeier.github.io/tawian-frontend/tawian-frontend.css',
+  'https://fonts.googleapis.com/css?family=Cousine:400,400i,700,700i',
+  // Add other assets and routes as needed
+];
+
 importScripts(
   "https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js"
 );
 
 function onInstall(event) {
   console.log('[Serviceworker]', "Installing!", event);
+
+  // Load cache with linked dependencies
+  event.waitUntil(
+    caches.open(`assets-styles-and-scripts-${version}`)
+        .then(function(cache) {
+            console.log('Opened cache');
+            return cache.addAll(URLS_TO_CACHE);
+        })
+  );
 }
 
 function onActivate(event) {
@@ -39,7 +56,18 @@ function onActivate(event) {
 }
 
 function onFetch(event) {
-    // console.log('[Serviceworker]', "Fetching!", event);
+  // event.respondWith(
+  //   caches.match(event.request).then(function(response) {
+  //       return response || fetch(event.request).catch(() => {
+  //           if (event.request.url.includes('.css')) {
+  //               return caches.match('/offline-style.css');
+  //           } else if (event.request.url.includes('.js')) {
+  //               return caches.match('/offline-script.js');
+  //           }
+  //           return caches.match('/offline.html');
+  //       });
+  //   })
+  // );
 }
 self.addEventListener('install', onInstall);
 self.addEventListener('activate', onActivate);
