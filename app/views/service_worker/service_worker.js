@@ -1,4 +1,4 @@
-const version = '1.0.16'; // Update this version number with each change
+const version = '1.0.17'; // Update this version number with each change
 
 const URLS_TO_CACHE = [
   'https://unpkg.com/dexie/dist/dexie.js',
@@ -70,7 +70,31 @@ self.addEventListener('activate', onActivate);
 
 self.addEventListener('fetch', (event) => {
   console.log('[Serviceworker]', "fetch", event)
-  if (event.request.mode === 'navigate') {
+  if (event.request.url.includes('/manifest.json')) {
+    event.respondWith(
+      caches.match('/manifest.json').then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(event.request).then(networkResponse => {
+          if (networkResponse.ok) {
+            return caches.open(`documents-${version}`).then(cache => {
+              cache.put('/manifest.json', networkResponse.clone());
+              return networkResponse;
+            });
+          } else {
+            throw new Error('Network response was not ok.');
+          }
+        }).catch(error => {
+          console.error('Fetch failed; returning offline page instead.', error);
+          return caches.match('/offline.html');
+        });
+      }).catch(error => {
+        console.error('Cache match failed:', error);
+        return caches.match('/offline.html');
+      })
+    );
+  } else if (event.request.mode === 'navigate') {
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
         if (cachedResponse) {
@@ -80,8 +104,10 @@ self.addEventListener('fetch', (event) => {
       })
     );
   } else if (event.request.url.includes('/1x1.png') || event.request.url.includes('/test_image.jpg')) {
+    // Network only
     event.respondWith(fetch(event.request));
   } else if (event.request.destination === 'style' || event.request.destination === 'script' || event.request.destination === 'image') {
+    // Cache first, then network
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
         return cachedResponse || fetch(event.request).then(networkResponse => {
