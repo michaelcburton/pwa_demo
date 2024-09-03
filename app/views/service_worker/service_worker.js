@@ -1,9 +1,16 @@
-const version = '1.0.17'; // Update this version number with each change
+const version = '1.0.18'; // Update this version number with each change
 
-const URLS_TO_CACHE = [
+const ASSETS_TO_CACHE = [
   'https://unpkg.com/dexie/dist/dexie.js',
   'https://maxbeier.github.io/tawian-frontend/tawian-frontend.css',
   'https://fonts.googleapis.com/css?family=Cousine:400,400i,700,700i',
+];
+
+const PAGES_TO_CACHE = [
+  '/',
+  '/offline.html',
+  '/posts',
+  '/manifest.json',
 ];
 
 async function onInstall(event) {
@@ -12,15 +19,10 @@ async function onInstall(event) {
     (async () => {
       try {
         const doc_cache = await caches.open(`documents-${version}`);
-        await doc_cache.addAll([
-          '/',
-          '/posts',
-          '/manifest.json',
-          '/offline.html'
-        ]);
+        await doc_cache.addAll(PAGES_TO_CACHE);
 
         const asset_cache = await caches.open(`assets-styles-and-scripts-${version}`);
-        for (const url of URLS_TO_CACHE) {
+        for (const url of ASSETS_TO_CACHE) {
           try {
             const response = await fetch(url, { mode: 'cors' });
             if (response.ok) {
@@ -44,8 +46,7 @@ function onActivate(event) {
 
   const currentCaches = [
     `documents-${version}`,
-    `assets-styles-and-scripts-${version}`,
-    `assets-images-${version}`
+    `assets-styles-and-scripts-${version}`
   ];
 
   event.waitUntil(
@@ -70,37 +71,28 @@ self.addEventListener('activate', onActivate);
 
 self.addEventListener('fetch', (event) => {
   console.log('[Serviceworker]', "fetch", event)
-  if (event.request.url.includes('/manifest.json')) {
-    event.respondWith(
-      caches.match('/manifest.json').then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return fetch(event.request).then(networkResponse => {
-          if (networkResponse.ok) {
-            return caches.open(`documents-${version}`).then(cache => {
-              cache.put('/manifest.json', networkResponse.clone());
-              return networkResponse;
-            });
-          } else {
-            throw new Error('Network response was not ok.');
-          }
-        }).catch(error => {
-          console.error('Fetch failed; returning offline page instead.', error);
-          return caches.match('/offline.html');
-        });
-      }).catch(error => {
-        console.error('Cache match failed:', error);
-        return caches.match('/offline.html');
-      })
-    );
-  } else if (event.request.mode === 'navigate') {
+  const url = new URL(event.request.url);
+
+  if (PAGES_TO_CACHE.includes(url.pathname)) {
+    console.log("URL Pathname", url.pathname)
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
+        console.log("Request:", event.request)
+        console.log("cachedResponse:", cachedResponse)
         if (cachedResponse) {
-          return cachedResponse; // Serve from cache
+          return cachedResponse; // Return the cached response if available
         }
-        return fetch(event.request).catch(() => caches.match('/offline.html'));
+        return fetch(event.request).then(networkResponse => {
+          return caches.open(`documents-${version}`).then(cache => {
+            cache.put(event.request, networkResponse.clone()); // Cache the new response
+            return networkResponse; // Return the network response
+          });
+        }).catch(() => {
+          // Return the offline page if the network is unavailable
+          if (url.pathname === '/' || url.pathname === '/posts') {
+            return caches.match('/offline.html');
+          }
+        });
       })
     );
   } else if (event.request.url.includes('/1x1.png') || event.request.url.includes('/test_image.jpg')) {
