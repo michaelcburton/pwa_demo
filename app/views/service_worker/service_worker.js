@@ -1,4 +1,4 @@
-const version = '1.0.15'; // Update this version number with each change
+const version = '1.0.16'; // Update this version number with each change
 
 const URLS_TO_CACHE = [
   'https://unpkg.com/dexie/dist/dexie.js',
@@ -14,6 +14,7 @@ async function onInstall(event) {
         const doc_cache = await caches.open(`documents-${version}`);
         await doc_cache.addAll([
           '/',
+          '/posts',
           '/manifest.json',
           '/offline.html'
         ]);
