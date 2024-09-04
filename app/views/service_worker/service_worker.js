@@ -1,4 +1,4 @@
-const version = '1.0.19'; // Update this version number with each change
+const version = '1.0.22'; // Update this version number with each change
 
 const ASSETS_TO_CACHE = [
   'https://unpkg.com/dexie/dist/dexie.js',
@@ -8,58 +8,34 @@ const ASSETS_TO_CACHE = [
 
 const PAGES_TO_CACHE = [
   '/',
-  '/offline.html',
   '/posts',
-  '/manifest.json',
+  "/posts/new",
+  "/manifest.json",
 ];
 
-importScripts(
-  "https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js"
-);
-
-workbox.setConfig({ debug: true });
-
-// We first define the strategies we will use and the registerRoute function
-const {CacheFirst, NetworkFirst, NetworkOnly} = workbox.strategies;
-const {registerRoute} = workbox.routing;
-const {ExpirationPlugin} = workbox.expiration;
-const {CacheableResponsePlugin} = workbox.cacheableResponse;
-const {precacheAndRoute} = workbox.precaching;
-
-async function onInstall(event) {
+self.addEventListener('install', event => {
   console.log('[Serviceworker]', "Installing!", event);
+
+  const documentsCachePromise = caches.open(`documents-${version}`).then(cache => {
+    return cache.addAll(PAGES_TO_CACHE.map(url => new Request(url, { cache: 'reload' })));
+  });
+
+  const assetsCachePromise = caches.open(`assets-styles-and-scripts-${version}`).then(cache => {
+    return cache.addAll(ASSETS_TO_CACHE);
+  });
+
   event.waitUntil(
-    (async () => {
-      try {
-        const doc_cache = await caches.open(`documents-${version}`);
-        await doc_cache.addAll([
-          '/',
-          '/manifest.json',
-          '/offline'
-        ]);
-
-        // Manually cache the cross-origin assets
-        const asset_cache = await caches.open(`assets-styles-and-scripts-${version}`);
-        for (const url of URLS_TO_CACHE) {
-          try {
-            const response = await fetch(url, { mode: 'cors' });
-            if (response.ok) {
-              await asset_cache.put(url, response);
-            } else {
-              console.error(`Failed to cache ${url}:`, response.status, response.statusText);
-            }
-          } catch (error) {
-            console.error(`Failed to fetch ${url}:`, error);
-          }
-        }
-      } catch (error) {
-        console.error('Error during service worker installation:', error);
-      }
-    })()
+    Promise.all([documentsCachePromise, assetsCachePromise])
+      .then(() => {
+        console.log('All caches have been populated successfully.');
+      })
+      .catch(error => {
+        console.error('Failed to populate caches:', error);
+      })
   );
-}
+});
 
-function onActivate(event) {
+self.addEventListener('activate', event => {
   console.log('[Serviceworker]', "Activating!", event);
 
   // clear old caches
@@ -85,78 +61,50 @@ function onActivate(event) {
       return self.clients.claim();
     })
   );
-  precacheAndRoute(ASSETS_TO_CACHE)
-}
+});
 
-// Cache the home page with a Network First strategy
-registerRoute(
-  ({ url }) => url.pathname === '/',
-  new CacheFirst({
-    cacheName: `documents-${version}`,
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 50,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
-      }),
-    ],
-  })
-);
+self.addEventListener('fetch', (event) => {
+  console.log('[Serviceworker]', "fetch", event)
+  const url = new URL(event.request.url);
 
-// manifest.json
-registerRoute(
-  ({url}) => url.pathname === '/manifest.json',
-  new CacheFirst({
-    cacheName: `documents-${version}`,
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 50,
-        maxAgeSeconds: 30 * 24 * 60 * 60,
-      }),
-    ],
-  })
-);
-
-// Specific route for the network check image and connection quality image
-registerRoute(
-  ({url}) => url.pathname === '/1x1.png',
-  new NetworkOnly()
-);
-
-registerRoute(
-  ({url}) => url.pathname === '/test_image.jpg',
-  new NetworkOnly()
-);
-
-// For every other page we use network first to ensure the most up-to-date resources
-registerRoute(
-  ({request, url}) => request.destination === "document" ||
-    request.destination === "",
-    new NetworkFirst({
-      cacheName: `documents-${version}`,
-      networkTimeoutSeconds: 10,
-      plugins: [
-        new CacheableResponsePlugin({
-          statuses: [0, 200],
-        }),
-        new ExpirationPlugin({
-          maxEntries: 50,
-          maxAgeSeconds: 30 * 24 * 60 * 60,
-        }),
-      ],
-    })
-);
-
-// For assets (scripts and images), we use cache first
-registerRoute(
-  ({request}) =>  request.destination === "script" ||
-                  request.destination === "style",
-  new CacheFirst({
-    cacheName: `assets-styles-and-scripts-${version}`,
-  })
-)
-registerRoute(
-  ({request}) => request.destination === "image",
-  new CacheFirst({
-    cacheName: `assets-images-${version}`,
-  })
-)
+  if (PAGES_TO_CACHE.includes(url.pathname)) {
+    console.log("URL Pathname", url.pathname)
+    event.respondWith(
+      caches.match(event.request).then(cachedResponse => {
+        console.log("Request:", event.request)
+        console.log("cachedResponse:", cachedResponse)
+        if (cachedResponse) {
+          return cachedResponse; // Return the cached response if available
+        }
+        return fetch(event.request).then(networkResponse => {
+          return caches.open(`documents-${version}`).then(cache => {
+            cache.put(event.request, networkResponse.clone()); // Cache the new response
+            return networkResponse; // Return the network response
+          });
+        }).catch(() => {
+          // Return the offline page if the network is unavailable
+          if (url.pathname === '/' || url.pathname === '/posts') {
+            return caches.match('/offline.html');
+          }
+        });
+      })
+    );
+  } else if (event.request.url.includes('/1x1.png') || event.request.url.includes('/test_image.jpg')) {
+    // Network only
+    event.respondWith(fetch(event.request));
+  } else if (event.request.destination === 'style' || event.request.destination === 'script' || event.request.destination === 'image') {
+    // Cache first, then network
+    event.respondWith(
+      caches.match(event.request).then(cachedResponse => {
+        return cachedResponse || fetch(event.request).then(networkResponse => {
+          return caches.open(`assets-styles-and-scripts-${version}`).then(cache => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+        });
+      })
+    );
+  } else {
+    event.respondWith(fetch(event.request));
+  }
+});
