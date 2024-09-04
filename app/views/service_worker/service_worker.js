@@ -1,4 +1,4 @@
-const version = '1.0.22'; // Update this version number with each change
+const version = '1.0.24'; // Update this version number with each change
 
 const ASSETS_TO_CACHE = [
   'https://unpkg.com/dexie/dist/dexie.js',
@@ -8,48 +8,51 @@ const ASSETS_TO_CACHE = [
 
 const PAGES_TO_CACHE = [
   '/',
+  '/offline.html',
   '/posts',
-  "/posts/new",
-  "/manifest.json",
+  '/manifest.json',
 ];
 
-self.addEventListener('install', event => {
+async function onInstall(event) {
   console.log('[Serviceworker]', "Installing!", event);
-
-  const documentsCachePromise = caches.open(`documents-${version}`).then(cache => {
-    return cache.addAll(PAGES_TO_CACHE.map(url => new Request(url, { cache: 'reload' })));
-  });
-
-  const assetsCachePromise = caches.open(`assets-styles-and-scripts-${version}`).then(cache => {
-    return cache.addAll(ASSETS_TO_CACHE);
-  });
-
   event.waitUntil(
-    Promise.all([documentsCachePromise, assetsCachePromise])
-      .then(() => {
-        console.log('All caches have been populated successfully.');
-      })
-      .catch(error => {
-        console.error('Failed to populate caches:', error);
-      })
-  );
-});
+    (async () => {
+      try {
+        const doc_cache = await caches.open(`documents-${version}`);
+        await doc_cache.addAll(PAGES_TO_CACHE);
 
-self.addEventListener('activate', event => {
+        const asset_cache = await caches.open(`assets-styles-and-scripts-${version}`);
+        for (const url of ASSETS_TO_CACHE) {
+          try {
+            const response = await fetch(url, { mode: 'cors' });
+            if (response.ok) {
+              await asset_cache.put(url, response);
+            } else {
+              console.error(`Failed to cache ${url}:`, response.status, response.statusText);
+            }
+          } catch (error) {
+            console.error(`Failed to fetch ${url}:`, error);
+          }
+        }
+      } catch (error) {
+        console.error('Error during service worker installation:', error);
+      }
+    })()
+  );
+}
+
+function onActivate(event) {
   console.log('[Serviceworker]', "Activating!", event);
 
-  // clear old caches
   const currentCaches = [
     `documents-${version}`,
-    `assets-styles-and-scripts-${version}`,
-    `assets-images-${version}`
+    `assets-styles-and-scripts-${version}`
   ];
 
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cache => {
-          // If this cache name isn't in the list of current caches, then delete it.
           if (!currentCaches.includes(cache)) {
             console.log(`Deleting old cache: ${cache}`);
             return caches.delete(cache);
@@ -61,32 +64,44 @@ self.addEventListener('activate', event => {
       return self.clients.claim();
     })
   );
-});
+}
+
+self.addEventListener('install', onInstall);
+self.addEventListener('activate', onActivate);
 
 self.addEventListener('fetch', (event) => {
   console.log('[Serviceworker]', "fetch", event)
-  const url = new URL(event.request.url);
-
-  if (PAGES_TO_CACHE.includes(url.pathname)) {
-    console.log("URL Pathname", url.pathname)
+  if (event.request.url.includes('/manifest.json')) {
     event.respondWith(
-      caches.match(event.request).then(cachedResponse => {
-        console.log("Request:", event.request)
-        console.log("cachedResponse:", cachedResponse)
+      caches.match('/manifest.json').then(cachedResponse => {
         if (cachedResponse) {
-          return cachedResponse; // Return the cached response if available
+          return cachedResponse;
         }
         return fetch(event.request).then(networkResponse => {
-          return caches.open(`documents-${version}`).then(cache => {
-            cache.put(event.request, networkResponse.clone()); // Cache the new response
-            return networkResponse; // Return the network response
-          });
-        }).catch(() => {
-          // Return the offline page if the network is unavailable
-          if (url.pathname === '/' || url.pathname === '/posts') {
-            return caches.match('/offline.html');
+          if (networkResponse.ok) {
+            return caches.open(`documents-${version}`).then(cache => {
+              cache.put('/manifest.json', networkResponse.clone());
+              return networkResponse;
+            });
+          } else {
+            throw new Error('Network response was not ok.');
           }
+        }).catch(error => {
+          console.error('Fetch failed; returning offline page instead.', error);
+          return caches.match('/offline.html');
         });
+      }).catch(error => {
+        console.error('Cache match failed:', error);
+        return caches.match('/offline.html');
+      })
+    );
+  } else if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match(event.request).then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse; // Serve from cache
+        }
+        return fetch(event.request).catch(() => caches.match('/offline.html'));
       })
     );
   } else if (event.request.url.includes('/1x1.png') || event.request.url.includes('/test_image.jpg')) {
