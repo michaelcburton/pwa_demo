@@ -7,18 +7,17 @@ importScripts(
 // We first define the strategies we will use and the registerRoute function
 const {CacheFirst, NetworkFirst, NetworkOnly} = workbox.strategies;
 const {registerRoute} = workbox.routing;
-const {warmStrategyCache, staticResourceCache} = workbox.recipes;
+const {warmStrategyCache, staticResourceCache, pageCache} = workbox.recipes;
 const {setCatchHandler} = workbox.routing;
+const {ExpirationPlugin} = workbox.expiration;
 const strategy = new NetworkFirst();
 const urls = [
   '/offline.html',
   '/',
   '/posts',
   '/manifest.json',
-  'https://unpkg.com/dexie/dist/dexie.js',
-  'https://maxbeier.github.io/tawian-frontend/tawian-frontend.css',
-  'https://fonts.googleapis.com/css?family=Cousine:400,400i,700,700i',
 ];
+
 // Warm the runtime cache with a list of asset URLs
 warmStrategyCache({urls, strategy});
 
@@ -31,7 +30,11 @@ warmStrategyCache({urls, strategy});
 // This recipe supports cache warming through the warmCache option. See the static 
 // resources cache options for a list of all configuration options.
 staticResourceCache({
-  warmCache: urls,  // Pre-cache the static resources
+  warmCache: [
+    'https://unpkg.com/dexie/dist/dexie.js',
+    'https://maxbeier.github.io/tawian-frontend/tawian-frontend.css',
+    'https://fonts.googleapis.com/css?family=Cousine:400,400i,700,700i',
+  ],  // Pre-cache the static resources
   cacheName: `static-resources-${version}`, // Optional: specify a custom cache name
   plugins: [
     new workbox.expiration.ExpirationPlugin({
@@ -41,11 +44,23 @@ staticResourceCache({
   ],
 });
 
-// If we have critical pages that won't be changing very often, it's a good idea to use cache first with them
-// registerRoute(
-//   ({url}) => url.pathname.startsWith('/'),
-//     new CacheFirst()
-// )
+// Add the pageCache recipe for caching HTML pages
+pageCache({
+  cacheName: `pages-cache-${version}`,  // Custom cache name for pages
+  networkTimeoutSeconds: 10,  // Give up on network after 10 seconds
+  warmCache: [
+    '/offline.html', 
+    '/', 
+    '/posts', 
+    '/posts/new'
+  ],  // Warm cache for critical pages
+  plugins: [
+    new ExpirationPlugin({
+      maxEntries: 50,  // Limit the number of cached pages
+      maxAgeSeconds: 7 * 24 * 60 * 60,  // Cache pages for 7 days
+    }),
+  ],
+});
 
 // Specific route for the network check image
 registerRoute(
@@ -59,21 +74,3 @@ registerRoute(
                       request.destination === "",
   new NetworkFirst()
 )
-
-// For assets (scripts and images), we use cache first
-// registerRoute(
-//   ({request}) =>  request.destination === "script" ||
-//                   request.destination === "style" ||
-//                   request.destination === "image",
-//   new CacheFirst()
-// )
-
-// Trigger a 'catch' handler when any of the other routes fail to generate a response
-setCatchHandler(async ({event}) => {
-  switch (event.request.destination) {
-    case 'document':
-      return strategy.handle({event, request: urls[0]});
-    default:
-     return Response.error();
-   }
-});
