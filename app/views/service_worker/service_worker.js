@@ -10,6 +10,7 @@ const {registerRoute} = workbox.routing;
 const {warmStrategyCache, staticResourceCache, pageCache} = workbox.recipes;
 const {setCatchHandler} = workbox.routing;
 const {ExpirationPlugin} = workbox.expiration;
+const {CacheableResponsePlugin} = workbox.cacheableResponse;
 const strategy = new NetworkFirst();
 const urls = [
   '/offline.html',
@@ -49,16 +50,21 @@ pageCache({
   cacheName: `pages-cache-${version}`,  // Custom cache name for pages
   networkTimeoutSeconds: 10,  // Give up on network after 10 seconds
   warmCache: [
-    '/offline.html', 
-    '/', 
-    '/posts', 
-    '/posts/new'
+    new Request('/', { cache: 'reload' }),
+    new Request('/posts', { cache: 'reload' }),
+    new Request('/posts/new', { cache: 'reload' }),
+    new Request('/offline.html', { cache: 'reload' })
   ],  // Warm cache for critical pages
   plugins: [
     new ExpirationPlugin({
       maxEntries: 50,  // Limit the number of cached pages
       maxAgeSeconds: 7 * 24 * 60 * 60,  // Cache pages for 7 days
     }),
+    {
+      cacheDidUpdate: async ({ cacheName, request, oldResposne, newResponse }) => {
+        console.log(`Cached page: ${request.url} in ${cacheName}`)
+      }
+    }
   ],
 });
 
