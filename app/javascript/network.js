@@ -10,23 +10,30 @@
 // network.js
 
 function checkOnlineStatus(callback) {
-    const img = new Image();
-    const timeout = 5000;  // Timeout for the request in milliseconds
+    console.log("Checking Online Status")
 
-    img.onerror = img.onabort = function() {
-        callback(false);
-    };
-    img.onload = function() {
-        callback(true);
-    };
-    img.src = "/1x1.png";  // Append current time to prevent caching
+    if (!navigator.onLine) {
+        callback(false);  // Browser reports offline
+        return;
+    }
 
-    // Set a timeout to handle cases where the request gets stuck or delayed
-    setTimeout(function() {
-        if (!img.complete) {
-            callback(false);
-        }
-    }, timeout);
+    const timeout = 5000;  // Timeout for the fetch request in milliseconds
+    const url = 'https://www.cloudflare.com/cdn-cgi/trace';  // Lightweight request to Cloudflare
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    const fetchTimeout = setTimeout(() => controller.abort(), timeout);
+
+    fetch(url, { method: 'GET', signal })
+        .then(response => {
+            clearTimeout(fetchTimeout);
+            callback(response.ok);  // Response should be ok (status 204)
+        })
+        .catch(() => {
+            clearTimeout(fetchTimeout);
+            callback(false);  // Failed to fetch (likely offline)
+        });
 }
 
 export { checkOnlineStatus };

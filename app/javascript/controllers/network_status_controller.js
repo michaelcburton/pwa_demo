@@ -1,5 +1,6 @@
 // app/javascript/controllers/network_status_controller.js
 import { Controller } from "@hotwired/stimulus";
+import { checkOnlineStatus } from "network";
 
 export default class extends Controller {
   static targets = ["status", "quality", "testButton"]
@@ -11,22 +12,17 @@ export default class extends Controller {
   }
 
   updateOnlineStatus() {
-    const online = navigator.onLine;
-    this.statusTarget.textContent = online ? 'Online' : 'Offline';
-    this.statusTarget.className = online ? 'online' : 'offline';
-    if (online) {
-      this.checkOnlineStatus();
-    }
+    checkOnlineStatus(isOnline => {
+      console.log("Online:", isOnline)
+      if (isOnline) {
+        this.statusTarget.textContent = 'Online'
+        this.statusTarget.className = 'online'
+      } else {
+        this.statusTarget.textContent = 'Offline'
+        this.statusTarget.className = 'offline'
+      }
+    })
   }
-
-  checkOnlineStatus = async () => {
-    try {
-      const online = await fetch("/1x1.png");
-      return online.status >= 200 && online.status < 300; // either true or false
-    } catch (err) {
-      return false; // definitely offline
-    }
-  };
 
   testConnectionQuality() {
     const startTime = (new Date()).getTime();
