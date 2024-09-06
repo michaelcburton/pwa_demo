@@ -1,4 +1,4 @@
-const version = '1.0.27'; // Update this version number with each change
+const version = '1.0.28'; // Update this version number with each change
 const CACHE_NAME = `my-rails-app-cache-v${version}`;
 const DYNAMIC_CACHE_NAME = `my-rails-dynamic-cache-v${version}`; // Separate cache for dynamic content
 
@@ -43,8 +43,8 @@ self.addEventListener('activate', event => {
 
 // Fetch event: Serve cached files when offline
 self.addEventListener('fetch', event => {
-  // Exclude `/1x1.png` from being cached or served from cache
-  if (event.request.url.endsWith('/1x1.png')) {
+  // Exclude `/1x1.png` and `/test_image.jpg` from being cached or served from cache
+  if (event.request.url.endsWith('/1x1.png') || event.request.url.endsWith('/test_image.jpg')) {
     // Always fetch this from the network to check online status
     event.respondWith(fetch(event.request));
     return;

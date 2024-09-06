@@ -30,7 +30,7 @@ export default class extends Controller {
     image.onload = () => {
       const endTime = (new Date()).getTime();
       const duration = (endTime - startTime);
-      const speed = Math.round(512 / duration); // Assuming image size is 512KB
+      const speed = Math.round(84.3 / duration); // Image size is 84.3KB
       const quality = speed < 1 ? 'Poor' : speed < 5 ? 'Moderate' : 'Good';
       this.qualityTarget.textContent = `${quality} (${speed} KB/ms)`;
     };
