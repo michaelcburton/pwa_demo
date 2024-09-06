@@ -49,6 +49,11 @@ self.addEventListener('fetch', event => {
     event.respondWith(fetch(event.request));
     return;
   }
+
+  // Ignore fetch requests to the online check URL
+  if (event.request.url.includes('/get')) {
+    return fetch(event.request);
+  }
   
   // Handle navigation requests (e.g., for HTML pages)
   if (event.request.mode === 'navigate') {
