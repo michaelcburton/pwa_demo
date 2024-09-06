@@ -44,7 +44,6 @@ export default class extends Controller {
     };
 
     checkOnlineStatus(isOnLine => {
-      debugger;
       if (isOnLine) {
         console.log("Sending to server...");
         this.sendToServer(data);
