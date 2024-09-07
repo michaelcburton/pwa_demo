@@ -3,7 +3,7 @@ class PostsController < ApplicationController
 
   # GET /posts or /posts.json
   def index
-    response.headers['Cache-Control'] = 'public, max-age=60, stale-while-revalidate=86400'
+    response.headers['Cache-Control'] = 'public, stale-while-revalidate=86400'
     @posts = Post.all
   end
 
@@ -13,7 +13,7 @@ class PostsController < ApplicationController
 
   # GET /posts/new
   def new
-    response.headers['Cache-Control'] = 'public, max-age=60, stale-while-revalidate=86400'
+    response.headers['Cache-Control'] = 'public, stale-while-revalidate=86400'
     @post = Post.new
   end
 

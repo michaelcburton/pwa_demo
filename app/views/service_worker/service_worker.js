@@ -1,4 +1,4 @@
-const version = '1.0.29'; // Update this version number with each change
+const version = '1.0.33'; // Update this version number with each change
 const CACHE_NAME = `app-cache-v${version}`;
 const DYNAMIC_CACHE_NAME = `dynamic-cache-v${version}`; // Separate cache for dynamic content
 
@@ -6,7 +6,14 @@ const DYNAMIC_CACHE_NAME = `dynamic-cache-v${version}`; // Separate cache for dy
 const ASSETS_TO_CACHE = [
   '/offline.html',
   '/',
-  '/posts/new',
+  new Request('/posts/new', { 
+    cache: 'reload',  // Forces the browser to fetch the resource from the network and store it
+    headers: { 'Accept': 'text/html' } // Ensures the correct headers are present
+  }),
+  new Request('/posts', { 
+    cache: 'reload',  // Forces the browser to fetch the resource from the network and store it
+    headers: { 'Accept': 'text/html' } // Ensures the correct headers are present
+  }),
   '/manifest.json',
   'https://unpkg.com/dexie/dist/dexie.js',
   'https://maxbeier.github.io/tawian-frontend/tawian-frontend.css',
@@ -58,18 +65,25 @@ self.addEventListener('fetch', event => {
   
   // Handle navigation requests (e.g., for HTML pages)
   if (event.request.mode === 'navigate') {
+    const normalizedRequest = new Request(event.request.url, {
+      method: event.method,
+      headers: { 'Accept': 'text/html' },
+      cache: 'default',  // Allow the cache to handle the response as normal
+      credentials: 'same-origin'  // Ensure same-origin credentials are respected
+    });
+
     event.respondWith(
-      caches.match(event.request)
+      caches.match(normalizedRequest)
         .then(cachedResponse => {
           if (cachedResponse) {
             return cachedResponse; // Serve from cache if found
           }
-          return fetch(event.request)
+          return fetch(normalizedRequest)
             .then(networkResponse => {
               return caches.open(DYNAMIC_CACHE_NAME)
                 .then(cache => {
                   // Cache the dynamic page response for future use
-                  cache.put(event.request, networkResponse.clone());
+                  cache.put(normalizedRequest, networkResponse.clone());
                   return networkResponse;
                 });
             });
