@@ -11,13 +11,14 @@ export default class extends Controller {
   }
 
   loadPosts() {
-    getAllRecords().then(posts => {
-      this.renderPosts(posts);
-    });
+    getAllRecords()
+      .then(posts => {
+        this.renderPosts(posts);
+      });
   }
 
   renderPosts(posts) {
-    this.postsContainerTarget.innerHTML = ''; // Clear existing posts
+    // this.postsContainerTarget.innerHTML = ''; // Clear existing posts
 
     posts.forEach(post => {
       const postElement = document.createElement('tr');
@@ -25,7 +26,7 @@ export default class extends Controller {
       postElement.innerHTML = `
         <td>${post.title}</td>
         <td>${new Date(post.created_at).toLocaleString()}</td>
-        <td>Data: ${JSON.stringify(post)}</td>
+        <td>Not Synced</td>
       `;
       this.postsContainerTarget.appendChild(postElement);
     });

@@ -3,17 +3,19 @@
 
   <%= link_to "New post", new_post_path, class: "btn btn-primary" %>
 
-  <h1>Posts Saved On Server</h1>
+  <h1>Posts</h1>
 
   <div id="posts">
     <table>
-      <% @posts.each do |post| %>
-        <%= render "post_row", post: post %>
-      <% end %>
+      <tbody id="posts-container" data-posts-target="postsContainer">
+        <% @posts.each do |post| %>
+          <%= render "post_row", post: post %>
+        <% end %>
+      </tbody>
     </table>
   </div>
 
-  <h1>Posts Saved Locally</h1><a id="clear-offline-records">Clear Offline Records</a>
+  <a id="clear-offline-records">Clear Offline Records</a>
   <table>
   <tbody id="posts-container" data-posts-target="postsContainer">
     <!-- Posts will be loaded here dynamically -->
