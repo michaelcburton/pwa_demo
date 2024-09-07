@@ -1,4 +1,4 @@
-const version = '1.0.33'; // Update this version number with each change
+const version = '1.0.36'; // Update this version number with each change
 const CACHE_NAME = `app-cache-v${version}`;
 const DYNAMIC_CACHE_NAME = `dynamic-cache-v${version}`; // Separate cache for dynamic content
 
