@@ -1,11 +1,13 @@
-const version = '1.0.28'; // Update this version number with each change
-const CACHE_NAME = `my-rails-app-cache-v${version}`;
-const DYNAMIC_CACHE_NAME = `my-rails-dynamic-cache-v${version}`; // Separate cache for dynamic content
+const version = '1.0.29'; // Update this version number with each change
+const CACHE_NAME = `app-cache-v${version}`;
+const DYNAMIC_CACHE_NAME = `dynamic-cache-v${version}`; // Separate cache for dynamic content
 
 // Define files to cache (static assets)
 const ASSETS_TO_CACHE = [
   '/offline.html',
   '/',
+  '/posts',
+  '/posts/new',
   '/manifest.json',
   'https://unpkg.com/dexie/dist/dexie.js',
   'https://maxbeier.github.io/tawian-frontend/tawian-frontend.css',
