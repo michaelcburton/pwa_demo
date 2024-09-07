@@ -6,7 +6,6 @@ const DYNAMIC_CACHE_NAME = `dynamic-cache-v${version}`; // Separate cache for dy
 const ASSETS_TO_CACHE = [
   '/offline.html',
   '/',
-  '/posts',
   '/posts/new',
   '/manifest.json',
   'https://unpkg.com/dexie/dist/dexie.js',
