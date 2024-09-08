@@ -1,4 +1,4 @@
-const version = '1.0.36'; // Update this version number with each change
+const version = '1.0.37'; // Update this version number with each change
 const CACHE_NAME = `app-cache-v${version}`;
 const DYNAMIC_CACHE_NAME = `dynamic-cache-v${version}`; // Separate cache for dynamic content
 
@@ -73,22 +73,19 @@ self.addEventListener('fetch', event => {
     });
 
     event.respondWith(
-      caches.match(normalizedRequest)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            return cachedResponse; // Serve from cache if found
-          }
-          return fetch(normalizedRequest)
-            .then(networkResponse => {
-              return caches.open(DYNAMIC_CACHE_NAME)
-                .then(cache => {
-                  // Cache the dynamic page response for future use
-                  cache.put(normalizedRequest, networkResponse.clone());
-                  return networkResponse;
-                });
-            });
+      fetch(normalizedRequest)  // Try fetching the latest content from the network first
+        .then(networkResponse => {
+          return caches.open(DYNAMIC_CACHE_NAME).then(cache => {
+            cache.put(normalizedRequest, networkResponse.clone()); // Cache the network response for future use
+            return networkResponse;
+          });
         })
-        .catch(() => caches.match('/offline.html')) // Serve fallback if both cache and network fail
+        .catch(() => {
+          // If the network fetch fails, try to serve the page from the cache
+          return caches.match(normalizedRequest).then(cachedResponse => {
+            return cachedResponse || caches.match('/offline.html');  // If no cache available, return offline fallback
+          });
+        })
     );
   } else {
     // Handle other asset requests (e.g., CSS, JS, etc.)
